@@ -1,0 +1,84 @@
+# @package _global_
+
+algo:
+  _target_: holomotion.src.algo.ppo.PPO
+  _recursive_: false
+  config:
+    # --- General Settings ---
+    enable_online_eval: false
+    num_learning_iterations: 300000
+    log_interval: 5
+    save_interval: 500
+    eval_interval: null
+    load_optimizer: true
+    headless: ${headless}
+    # ---
+
+    # --- Accelerate Settings ---
+    mixed_precision: null # "fp16", "bf16", or null. Use "bf16" for A100/H100, "fp16" for older GPUs
+    dynamo_backend: null # "inductor", "aot_eager", "cudagraphs", or null. Enables automatic model compilation during prepare()
+    # ---
+
+    # --- PPO Related Settings ---
+    init_at_random_ep_len: true
+    num_steps_per_env: 32
+    num_learning_epochs: 3
+    num_mini_batches: 4
+    clip_param: 0.2
+    gamma: 0.99
+    lam: 0.95
+    value_loss_coef: 1.0
+    entropy_coef: 5.0e-3
+    max_grad_norm: 1.0
+    use_clipped_value_loss: true
+    desired_kl: 0.01
+    init_noise_std: 1.0
+
+    # --- Optimizer Settings ---
+    optimizer_type: AdamW # Options: "AdamW", "Adam"
+    schedule: adaptive
+    actor_learning_rate: 3.0e-4
+    critic_learning_rate: 5.0e-4
+
+    # Distributed training settings
+    normalize_advantage_per_mini_batch: false # Use global advantage norm for DDP
+    global_advantage_norm: true # Sync advantages across all ranks
+    # ---
+
+    # --- Observation Normalization Settings ---
+    obs_norm:
+      enabled: true
+      epsilon: 1.0e-8 # Reduced for better stability in DDP
+      update_at_train: true
+      update_at_eval: false
+      enable_clipping: true # Enable clipping for DDP stability
+      clip_range: 10.0 # Reduced clip range for better stability
+      sync_interval_steps: 8 # Periodically sync obs normalizers across ranks during rollout
+      actor:
+        enabled: true
+      critic:
+        enabled: true
+    # ---
+
+    # --- Sampling Strategy ---
+    sampling_strategy: uniform
+    # ---
+
+    # --- Dagger Related Settings ---
+    teacher_actor_ckpt_path: null
+    dagger_only: false
+    dagger_init_coef: 1.0
+    dagger_anneal: true
+    dagger_anneal_degree: 1.0e-05
+    rl_init_coef: 1.0
+    rl_warmup: false
+    rl_warmup_degree: 1.0e-05
+    load_critic_when_dagger: false
+    # ---
+
+    algo_obs_dim_dict: ???
+
+    # --- Module Settings ---
+    module_dict:
+      actor: ${modules.actor}
+      critic: ${modules.critic}

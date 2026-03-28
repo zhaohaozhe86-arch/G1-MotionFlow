@@ -1,0 +1,63 @@
+NAME: Pretrain_UnitreeG1 # Experiment names
+ACCELERATOR: 'gpu' # Devices optioncal: “cpu”, “gpu”, “tpu”, “ipu”, “hpu”, “mps, “auto”
+NUM_NODES: 1 # Number of GPU nodes for distributed training
+STRATEGY: 'ddp_find_unused_parameters_false'
+DEVICE: [0,1,2,3] # Index of gpus eg. [0] or [0,1,2,3]
+
+TRAIN:
+  #---------------------------------
+  STAGE: lm_pretrain # stage "vae" , "lm_pretrain", "lm_instruct"
+  #---------------------------------
+  NUM_WORKERS: 16 # Number of workers
+  BATCH_SIZE: 16 # Size of batches
+  END_EPOCH: 499 # End epoch
+  RESUME: '' # Resume training from this path
+  PRETRAINED: '' # Preatrained model path
+  PRETRAINED_VAE: experiments/mgpt/VQVAE_UnitreeG1_v4/checkpoints/epoch=999-v1.ckpt # Vae model path
+
+  OPTIM:
+    target: AdamW
+    params:
+      lr: 2e-4
+      betas: [0.9, 0.99]
+      weight_decay: 0.0
+
+# Evaluating Configuration
+EVAL:
+  BATCH_SIZE: 32 # Evaluating Batch size
+  SPLIT: test
+
+TEST:
+  CHECKPOINTS: checkpoints/MotionGPT-base/motiongpt_s3_h3d.tar
+  SPLIT: test
+  BATCH_SIZE: 32 # training Batch size
+
+DATASET:
+  target: mGPT.data.UnitreeG1.UnitreeG1DataModule
+  CODE_PATH: TOKENS
+
+METRIC:
+  TYPE: [] # 'TM2TMetrics', 'PredMetrics']
+
+LOSS:
+  LAMBDA_FEATURE: 1.0
+  LAMBDA_VELOCITY: 0.5
+  LAMBDA_COMMIT: 0.02
+  LAMBDA_CLS: 1.0
+  ABLATION:
+    RECONS_LOSS: 'l1_smooth'
+
+model:
+  target: mGPT.models.mgpt.MotionGPT
+  params:
+    condition: 'text'
+    task: 't2m'
+    lm: ${lm.default}
+    motion_vae: ${vq.default}
+
+LOGGER:
+  TYPE: ['tensorboard', 'wandb']
+  VAL_EVERY_STEPS: 10
+  WANDB:
+    params:
+      project: motiongpt
