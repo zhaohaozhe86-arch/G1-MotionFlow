@@ -161,6 +161,3 @@ This project incorporates code and assets from the following upstream projects:
 ## ⚖️ License
 
 This project is licensed under the [MIT License](https://www.google.com/search?q=LICENSE).
-
-```
-```
